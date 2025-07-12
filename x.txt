@@ -1,0 +1,683 @@
+                                           3
+# Solve the following initial value problems using odeint and solve ivp commands and
+ compare the actual error at each step. Also, plot the solutions with exact solutions on the same set of axes:
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint,solve_ivp
+def f(y,t):
+    return t*np.exp(3*t)-2*y
+def exact_solution(t):
+    return (1/5)*t*np.exp(3*t)-(1/25)*np.exp(3*t)+(1/25)*np.exp(-2*t)
+t=np.linspace(0,1,11)
+y0=0
+y_odeint=odeint(f,y0,t).flatten()
+solution=solve_ivp(lambda t,y:f(y,t),[0,1],[0],t_eval=t)
+y_solve_ivp=solution.y.flatten()
+exact=exact_solution(t)
+Error_y_odeint=np.abs(exact-y_odeint)
+Error_y_solve_ivp=np.abs(exact-y_solve_ivp)
+print('t         y_odeint     y_solve_ivp      exact    Error_y_odeint     Error_y_solve_ivp ')
+for i in range(len(t)):
+    print(f'{t[i]:.1f}      {y_odeint[i]:.5f}      {y_solve_ivp[i]:.5f}           {exact[i]:.5f},          {Error_y_odeint[i]:.5f}        {Error_y_solve_ivp[i]:.5f}')
+fig=plt.figure(figsize=(12,10))
+plt.subplot(1,2,1)
+plt.plot(t,exact,'k--',label='Exact Solution')
+plt.plot(t,y_odeint, 'r',label='odeint Solution')
+plt.plot(t,y_solve_ivp, 'b',label='solve ivp')
+plt.xlabel('t')
+plt.ylabel('solution')
+plt.legend()
+plt.subplot(1,2,2)
+plt.plot(t,Error_y_odeint, 'r--',label='Error odeint Solution')
+plt.plot(t,Error_y_solve_ivp, 'b',label='Error solve ivp')
+plt.xlabel('t')
+plt.ylabel('Error')
+plt.legend()
+plt.show()
+
+
+
+#Consider the Lotka-Volterra predator-prey model defined by
+ 𝑑𝑥/ 𝑑𝑡 = −0.1𝑥 +0.02𝑥𝑦
+ 𝑑𝑦/𝑑𝑡 = 0.2𝑦 −0.025𝑥𝑦
+ where the populations 𝑥(𝑡) (predators) and 𝑦(𝑡) (prey) are measured in thousands. Suppose
+ 𝑥(0) = 6 and 𝑦(0) = 6. Solve the system to find 𝑥(𝑡) and 𝑦(𝑡), and use the graphs to
+ approximate the time 𝑡 > 0 when the two populations are first equal.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+def lotka_volterra(t,z):
+    x,y=z
+    dx_dt=-0.1*x+0.02*x*y
+    dy_dt=0.2*y-0.025*x*y
+    return[dx_dt,dy_dt]
+x0=6
+y0=6
+z0=[x0,y0]
+t_span = (0, 100)
+t_eval = np.linspace(t_span[0], t_span[1], 2000)
+sol = solve_ivp(lotka_volterra, t_span, z0, t_eval=t_eval)
+t = sol.t
+x = sol.y[0]
+y = sol.y[1]
+# Display x(t) and y(t) 
+print('t       x(t)            y(t)')
+for i in range(len(t_eval)):
+    print(f'{t[i]:.4f}   {x[i]:.6f}    {y[i]:.6f}')
+# Find the first time when x(t) ≈ y(t), ignoring t = 0
+diff = np.abs(x - y)
+nonzero_diff_indices = np.where(t > 0)[0]
+equal_index = nonzero_diff_indices[np.argmin(diff[nonzero_diff_indices])]
+#print(equal_index)
+equal_time = t[equal_index]
+equal_value = x[equal_index]
+print(f"\nThe populations are approximately equal at first t ≈ {equal_time:.2f}(t>0), with x(t) ≈ y(t) ≈ {equal_value:.2f}")
+#plotting
+plt.figure()
+plt.plot(t,x,label='predators(x)',color='red')
+plt.plot(t,y,label='prey(y)',color='green')
+plt.axvline(equal_time, color='blue', linestyle='--', label=f'x ≈ y ≈ {equal_value:.2f} at t ≈ {equal_time:.2f}')
+plt.xlabel("Time")
+plt.ylabel("Populations (in thousands)")
+plt.title('Lotka-Volterra Predator-Prey Model')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Consider the competition model defined by
+ 𝑑𝑥/𝑑𝑡 = 𝑥(2−0.4𝑥 −0.3𝑦)
+ 𝑑𝑦/𝑑𝑡 = 𝑦(1−0.1𝑦 −0.3𝑥)
+ where the populations 𝑥(𝑡) and 𝑦(𝑡) are measured in thousands and 𝑡 in years. Analyze the
+ populations over a long period of time for each of the following cases:
+ a) 𝑥(0) = 1.5, 𝑦(0) = 3.5
+ b) 𝑥(0) = 1, 𝑦(0) = 1
+ c) 𝑥(0) = 2, 𝑦(0) = 7
+ d) 𝑥(0) = 4.5, 𝑦(0) = 0.5
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+def competition_model(z, t):
+    x, y = z
+    dxdt = x * (2 - 0.4 * x - 0.3 * y)
+    dydt = y * (1 - 0.1 * y - 0.3 * x)
+    return [dxdt, dydt]
+t = np.linspace(0, 50, 500)
+plt.figure(figsize=(12,10))
+initial_conditions = [(1.5, 3.5),(1, 1),(2, 7),(4.5, 0.5)]
+for i, (x0, y0) in enumerate(initial_conditions):
+    z0 = [x0, y0]
+    z = odeint(competition_model, z0, t)
+    x, y = z.T
+    plt.subplot(2, 2, i + 1)
+    plt.plot(t, x, label='x(t)')
+    plt.plot(t, y, label='y(t)')
+    plt.xlabel('Time (years)')
+    plt.ylabel('Population (thousands)')
+    plt.title(f'Initial conditions: x(0)={x0}, y(0)={y0}')
+    plt.legend()
+plt.show()
+
+
+
+# The motion of a swinging pendulum under certain simplifying assumptions is described
+ by the second-order differential equation
+ 𝑑2𝜃/ 𝑑𝑡2 + 𝑔/𝐿 *𝑠𝑖𝑛𝜃 = 0
+ Suppose the pendulumis2feetlong and 𝑔 = 32.17𝑓𝑡/𝑠2. Findthevaluesof 𝜃 for0 ≤ 𝑡 ≤ 2
+ and initial conditions 𝜃(0) = 𝜋
+ 6, 𝜃′(0) = 0, taking increment of 0.1𝑠
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+g = 32.17  
+L = 2     
+def pendulum_eq(theta, t):
+    dtheta_dt = theta[1]
+    d2theta_dt2 = -(g / L) * np.sin(theta[0])
+    return [dtheta_dt, d2theta_dt2]
+theta0 = [np.pi/ 6,0]
+t = np.arange(0,2.1,0.1) 
+theta = odeint(pendulum_eq, theta0,t)
+print("Theta:",theta)
+plt.plot(t, theta[:, 0], label='Angle (radians)')
+plt.xlabel('Time (s)')
+plt.ylabel('Theta (radians)')
+plt.title('Motion of a Swinging Pendulum')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+#Solve the following system of ODEs
+ 
+ 𝑥′′′2 =−𝑥1''^3 +𝑥2′+𝑥1 + 𝑠𝑖𝑛(𝑡)
+ 𝑥1''' =−2𝑥2'^2+ 𝑥2
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+def system(t, y):
+    x1, x2, x3, x4, x5, x6 = y  
+    dx1_dt = x3
+    dx3_dt = x5
+    dx5_dt = -2 * x4**2 + x2
+    dx2_dt = x4
+    dx4_dt = x6
+    dx6_dt = -x5**3 + x4 + x1 + np.sin(t)
+    return [dx1_dt, dx2_dt, dx3_dt, dx4_dt, dx5_dt, dx6_dt]
+initial_conditions = [0, 0, 0, 0, 0, 0]  
+t_span = (0, 10)  
+t_eval = np.linspace(0, 10, 100)  
+solution = solve_ivp(system, t_span, initial_conditions, t_eval=t_eval)
+t_values = solution.t
+x1_values, x2_values = solution.y[0], solution.y[1]  
+#print(f"{'Time':<12} {'x1':<15} {'x2':<15}")
+#for t, x1, x2 in zip(t_values, x1_values, x2_values):
+   # print(f"{t:<10.2f} {x1:<15.6f} {x2:<15.6f}")
+#print(       x2_values.T)
+print(t_values)
+print(t_eval)
+plt.figure(figsize=(8, 5))
+plt.plot(t_values, x1_values, label="x1(t)")
+plt.plot(t_values, x2_values, label="x2(t)")
+plt.xlabel("Time (t)")
+plt.ylabel("Values of x1 and x2")
+plt.title("Solution to the System of ODEs")
+plt.legend()
+plt.grid()
+plt.show()
+
+
+# Use the Linear Shooting Algorithm to approximate the solution of 𝑦 = 𝑒^−10𝑥 to the
+ boundary value problem
+ 𝑦′′ = 100𝑦, 0 ≤ 𝑥 ≤ 1, 𝑦(0) = 1, 𝑦(1) = 𝑒−10
+ Use h = 0.1 and 0.05. Also use solve
+ bvp to find the solution of the same problem.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp, solve_bvp
+def shooting_system(x, y):
+    y1, y2 = y
+    return [y2, 100*y1]
+def shooting_method(h, y0, y1, x_end):
+    x = np.arange(0, x_end + h, h)
+    sol1 = solve_ivp(shooting_system, [0, x_end], [0, 1], t_eval=x, method='RK45')
+    sol2 = solve_ivp(shooting_system, [0, x_end], [1, 0], t_eval=x, method='RK45')
+    v1, v1p = sol1.y
+    v2, v2p = sol2.y
+    s = (y1 - v2[-1]) / v1[-1]
+    y_shoot = v2 + s * v1  
+    return x, y_shoot
+x1, y1 = shooting_method(0.1, 1, np.exp(-10), 1)
+x2, y2 = shooting_method(0.05, 1, np.exp(-10), 1)
+print("\nShooting Method (h=0.1):")
+for i in range(len(x1)):
+    print(f"x = {x1[i]:.2f}, y(x) = {y1[i]:.6f}")
+print("\nShooting Method (h=0.05):")
+for i in range(len(x2)):
+    print(f"x = {x2[i]:.2f}, y(x) = {y2[i]:.6f}")
+def bvp_system(x, y):
+    y1, y2 = y
+    return np.vstack([y2, 100*y1])
+def bc(Ya, Yb):
+    return np.array([Ya[0] - 1, Yb[0] - np.exp(-10)])
+x_mesh = np.linspace(0, 1, 50)
+Y_guess = np.zeros((2, x_mesh.size))  
+bvp_solution = solve_bvp(bvp_system, bc, x_mesh, Y_guess)
+y_bvp = bvp_solution.sol(x_mesh)[0]
+print("\nsolve_bvp Solution:")
+for i in range(len(bvp_solution.x)):
+    print(f"x = {bvp_solution.x[i]:.2f}, y(x) = {bvp_solution.y[0, i]:.6f}")
+x_exact = np.linspace(0, 1, 100)
+y_exact = np.exp(-10 * x_exact)
+print("\nExact Solution:")
+for i in range(len(x_exact)):
+    print(f"x = {x_exact[i]:.2f}, y(x) = {y_exact[i]:.6f}")
+plt.figure(figsize=(10, 6))
+plt.plot(x_exact, y_exact, 'k-', label="Analytical Solution")
+plt.plot(x1, y1, 'ro-', label="Shooting Method (h=0.1)")
+plt.plot(x2, y2, 'bs-', label="Shooting Method (h=0.05)")
+plt.plot(x_mesh, y_bvp, 'g*-', label="solve_bvp Solution")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Numerical and Analytical Solutions")
+plt.legend()
+plt.grid()
+plt.show()
+   
+
+
+                                       #4
+
+#1. Use graphical method to solve the following linear programming problem:
+
+Maximize Z = 2x1 + x2.
+Subject to:
+x1 + 2x2 <= 10
+x1 + x2 <= 6
+x1 - x2 <= 2
+x1 - 2x2 <= 1
+x1, x2 >= 0.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import linprog
+#Define the objective function
+c=[-2,-1] #Negated for maximization
+#Constraints
+A=[[1,2],[1,1],[1,-1],[1,-2]]
+b=[10,6,2,1]
+#Bounds 
+x0_bounds=(0,None)
+x1_bounds=(0,None)
+#Solve using linprog
+res=linprog(c,A_ub=A,b_ub=b,bounds=[x0_bounds,x1_bounds],method='highs')
+
+print('Optimal Solution:')
+print(f'x1={res.x[0]}')
+print(f'x2={res.x[1]}')
+print(f'Maximum Z={-res.fun}')
+#plotting
+x=np.linspace(0,10,400)
+plt.figure(figsize=(8,6))
+#Plot each constraint line
+plt.plot(x,(10-x)/2,label=r'$x_1+2x_2\leq 10$')
+plt.plot(x,6-x,label=r'$x_1+x_2\leq 6$')
+plt.plot(x,x-2,label=r'$x_1-x_2\leq 2$')
+plt.plot(x,(x-1)/2,label=r'$x_1-2x_2\leq 1$')
+#Fill feasible region
+x1=np.linspace(0,10,400)
+x2=np.linspace(0,10,400)
+X1,X2=np.meshgrid(x1,x2)
+
+ineq1=(X1+2*X2<=10)
+ineq2=(X1+X2<=6)
+ineq3=(X1-X2<=2)
+ineq4=(X1-2*X2<=1)
+ineq5=(X1>=0)&(X2>=0)
+feasible=ineq1&ineq2&ineq3&ineq4&ineq5
+plt.contourf(X1,X2,feasible,levels=[0.5,1],alpha=0.5)
+#Plot optimal point
+if res.success:
+    plt.plot(res.x[0],res.x[1],'ro',label='Optimal solution')
+    plt.text(res.x[0]+0.1,res.x[1],f'Z={round(-res.fun,2)}')
+#Labeling
+plt.xlim(0,10)
+plt.ylim(0,10)
+plt.xlabel(r'$x_1$')
+plt.ylabel(r'$x_2$')
+plt.title('Feasible region and optimal solution')
+plt.legend()
+plt.grid()
+plt.show()
+  
+
+
+#A person wants to decide the constituents of a diet which will fulfill his daily requirement of proteins, fat, and carbohydrates at the minimum cost. The choice is to be made from four different types of foods. The yields per unit of these foods are given in the following table.
+
+Food type
+
+Proteins
+
+Fat
+
+Carbohydrates
+
+Cost per unit (in BDT)
+Minimum requirement | 800 | 200 | 700 |
+Formulate a linear programming model for the aforementioned problem and solve.
+from scipy.optimize import linprog
+
+
+#Define the objective function
+c=[45,40,85,65]
+#Constraints
+A=[[-3,-4,-8,-6], #Proteins
+   [-2,-2,-7,-5], #Fats
+   [-6,-4,-7,-4]  #Carbohydrates
+   ]
+b=[-800,-200,-700]
+#Bounds 
+x_bounds=[(0,None)]*4
+#Solve using linprog
+res=linprog(c,A_ub=A,b_ub=b,bounds=x_bounds,method='highs')
+
+#Output result
+if res.success:
+    print('Food units to purchase',res.x)
+    print(f'Minimum cost: {res.fun} BDT')
+
+
+
+# phosphorous and ash as impurities. In a particular industrial process, fuel up to 100 ton (maximum) is required which should contain ash not more than 3% and phosphorous not more than 0.03%. It is desired to maximize the profit which satisfying these conditions. There is an unlimited supply of each grade. The percentage of impurities and profits of grades are given in the following table.
+
+Coal   Phosphorous (%)   Ash (%)    Profit in BDT per ton
+A       0.02             3               12
+B       0.04             2               15
+C       0.03             5               14
+
+
+
+import numpy as np
+from scipy.optimize import linprog
+
+c = [-12, -15, -14]  # Negative because linprog minimizes
+
+A_ub = [
+    [1, 1, 1],        # Total weight constraint
+    [0, -1, 2],       # Ash content constraint
+    [-0.01, 0.01, 0]  # Phosphorous content constraint
+]
+
+# Right-hand side of constraints
+b_ub = [100, 0, 0]
+
+# Bounds for variables (all non-negative)
+bounds = [(0, None), (0, None), (0, None)]
+
+# Solve using simplex method
+result = linprog(c=c, A_ub=A_ub, b_ub=b_ub, bounds=bounds, method='simplex')
+
+print("Optimization status:", result.message)
+print("\nOptimal solution:")
+print(f"Coal A: {result.x[0]:.2f} tons")
+print(f"Coal B: {result.x[1]:.2f} tons")
+print(f"Coal C: {result.x[2]:.2f} tons")
+print(f"Total: {sum(result.x):.2f} tons")
+
+print("\nTotal profit: {:.2f} BDT".format(-result.fun))
+
+# Let's verify our constraints are met
+print("\nVerification:")
+total_ash = (3*result.x[0] + 2*result.x[1] + 5*result.x[2]) / sum(result.x) * 100
+total_phosphorous = (0.02*result.x[0] + 0.04*result.x[1] + 0.03*result.x[2]) / sum(result.x) * 100
+
+print(f"Ash percentage: {total_ash/100:.4f}% (limit: 3%)")
+print(f"Phosphorous percentage: {total_phosphorous/100:.4f}% (limit: 0.03%)")
+
+
+# 4. A diet for a sick person must contain at least 4000 units of vitamins, 50 units of minerals, and 1400 units of calories. Two food A and B are available at a cost of BDT. 4 and BDT. 3 per unit, respectively. It is known that one unit of food A contains 200 units of vitamins, 1 unit of mineral, and 40 units of calories and on the other hand one unit of food B contains 100 units of vitamins, 2 units of minerals, and 40 units of calories. Find the minimum cost of food mix using the Big-M method.
+
+import pulp
+#Create LP problem
+prob=pulp.LpProblem('Diet_problem_BigM',pulp.LpMinimize)
+#Big M value
+M=1e6
+#Decision variables
+x1=pulp.LpVariable('Food_A',lowBound=0)
+x2=pulp.LpVariable('Food_B',lowBound=0)
+#Slack,surplus and artificial variables
+s1=pulp.LpVariable('Surplus1',lowBound=0)
+a1=pulp.LpVariable('Artificial1',lowBound=0)
+
+s2=pulp.LpVariable('Surplus2',lowBound=0)
+a2=pulp.LpVariable('Artificial2',lowBound=0)
+
+s3=pulp.LpVariable('Surplus3',lowBound=0)
+a3=pulp.LpVariable('Artificial3',lowBound=0)
+
+prob+=4*x1+3*x2+M*a1+M*a2+M*a3
+
+prob+=200*x1+100*x2-s1+a1==4000
+prob+=x1+2*x2-s2+a2==50
+prob+=40*x1+40*x2-s3+a3==1400
+
+prob.solve()
+#Output
+print(f'Optimal quantity of food A:{x1.varValue}')
+print(f'Optimal quantity of food B:{x2.varValue}')
+print(f'Minimum total cost:{pulp.value(prob.objective)}')
+
+#if no pulp ..alternative code for this problem:
+
+
+import numpy as np
+
+def big_m_method():
+    # Coefficients for constraints (A matrix)
+    # Columns: x, y, s1, s2, s3, a1, a2, a3
+    A = np.array([
+        [200, 100, -1, 0, 0, 1, 0, 0],  # Vitamins
+        [1, 2, 0, -1, 0, 0, 1, 0],      # Minerals
+        [40, 40, 0, 0, -1, 0, 0, 1]     # Calories
+    ])
+    
+    # Right-hand side (b vector)
+    b = np.array([4000, 50, 1400])
+    
+    # Objective function coefficients (c vector)
+    # Original: 4x + 3y, artificial variables with Big M
+    M = 1e6  # Large positive number
+    c = np.array([4, 3, 0, 0, 0, M, M, M])
+    
+    # Initial basic variables: a1, a2, a3 (indices 5,6,7)
+    basic_vars = [5, 6, 7]
+    
+    # Initial tableau: [A | b]
+    tableau = np.hstack((A, b.reshape(-1, 1)))
+    
+    # Adjust the objective row
+    # Z = c - M * sum of artificial rows
+    artificial_rows = A[[0,1,2], :]  # Rows corresponding to a1, a2, a3
+    obj_row = c - M * np.sum(artificial_rows, axis=0)
+    tableau = np.vstack((tableau, np.append(obj_row, 0)))
+    
+    # Simplex iterations
+    while True:
+        # Find the entering variable (most negative in obj row)
+        obj_row = tableau[-1, :-1]
+        if np.all(obj_row >= 0):
+            break  # Optimal solution reached
+        entering = np.argmin(obj_row)
+        
+        # Find the leaving variable (min ratio test)
+        ratios = tableau[:-1, -1] / tableau[:-1, entering]
+        ratios[ratios <= 0] = np.inf
+        leaving = np.argmin(ratios)
+        
+        # Pivot
+        pivot_element = tableau[leaving, entering]
+        tableau[leaving, :] /= pivot_element
+        for i in range(tableau.shape[0]):
+            if i != leaving:
+                factor = tableau[i, entering]
+                tableau[i, :] -= factor * tableau[leaving, :]
+        
+        # Update basic variables
+        basic_vars[leaving] = entering
+    
+    # Extract solution
+    solution = np.zeros(len(c))
+    for i, var in enumerate(basic_vars):
+        if var < len(c):
+            solution[var] = tableau[i, -1]
+    
+    x, y = solution[0], solution[1]
+    total_cost = 4 * x + 3 * y
+    
+    return x, y, total_cost
+
+# Run the function
+x, y, total_cost = big_m_method()
+print(f"Optimal number of units of Food A: {x}")
+print(f"Optimal number of units of Food B: {y}")
+print(f"Total Cost (BDT): {total_cost}")
+
+# Verify constraints
+vitamins = 200 * x + 100 * y
+minerals = 1 * x + 2 * y
+calories = 40 * x + 40 * y
+print(f"Vitamins provided: {vitamins}")
+print(f"Minerals provided: {minerals}")
+print(f"Calories provided: {calories}")
+
+
+#Find the basic feasible solution of the following transportation problem by:
+
+(i). North-West Corner Rule
+(ii). Least Cost Method
+
+  P  Q  R  S  T   AVAILABLE
+A 4  3  1  2  6      80
+B 5  2  3  4  5      60
+C 3  5  6  3  2      40
+D 2  4  4  5  3      20
+Re 60 60 30 40 10   200
+
+
+import numpy as np
+#Supply & Demand
+supply=[80,60,40,20]
+demand=[60,60,30,40,10]
+#Cost matrix
+cost=np.array([
+   [4,3,1,2,6],
+   [5,2,3,4,5],
+   [3,5,4,2,5],
+   [2,4,4,5,3]
+],dtype=float)
+
+def northwest_corner(s,d):
+    s,d=s[:],d[:]
+    alloc=np.zeros((len(s),len(d)),dtype=int)
+    i=j=0
+    while i<len(s) and j<len(d):
+        m=min(s[i],d[j])
+        alloc[i][j]=m
+        s[i]-=m
+        d[j]-=m
+        if s[i]==0: i+=1
+        elif d[j]==0: j+=1
+    return alloc
+
+def least_cost(s,d,c):
+    s,d=s[:],d[:]
+    c=c.copy()
+    alloc=np.zeros_like(c)
+    while np.any(s) and np.any(d):
+        i,j=divmod(np.argmin(c),c.shape[1])
+        m=min(s[i],d[j])
+        alloc[i][j]=m
+        s[i]-=m
+        d[j]-=m
+        if s[i]==0: c[i,:]=np.inf
+        elif d[j]==0: c[:,j]=np.inf
+    return alloc
+
+def total_cost(a,c):
+    return np.sum(a*c)
+
+nw=northwest_corner(supply,demand)
+lc=least_cost(supply,demand,cost)
+
+print('North-West Corner:\n',nw)
+print('Cost:',total_cost(nw,cost))
+print('\nLeast Cost Method:\n',lc)
+print('Cost:',total_cost(lc,cost))
+
+
+#A company has factories F1,F2 and F3 which supply to warehouses W1,W2,W3
+ . 
+Weekly factory capacities are 200, 160, and 90 units, respectively. Weekly warehouse 
+requirements are 180, 120, and 150 units, respectively. Unit shipping costs (in BDT) 
+are as follows:
+      w1  w2  w3  supply
+F1 16   20     12  200
+F2 14  8       18  160 
+F3 26  24     16    90 
+Demand 180 120 150
+Determine the optimal solution using MODI method.
+
+
+from pulp import *
+
+# Define supply, demand, and costs
+supply = {'F1': 200, 'F2': 160, 'F3': 90}
+demand = {'W1': 180, 'W2': 120, 'W3': 150}
+costs = {
+    'F1': {'W1': 16, 'W2': 20, 'W3': 12},
+    'F2': {'W1': 14, 'W2': 8, 'W3': 18},
+    'F3': {'W1': 26, 'W2': 24, 'W3': 16}
+}
+
+# Create the linear programming problem
+prob = LpProblem("Transportation_Problem", LpMinimize)
+
+# Define decision variables
+vars = LpVariable.dicts("Route", (supply.keys(), demand.keys()), 0, None, LpContinuous)
+
+# Set the objective function (minimize total cost)
+prob += lpSum([vars[f][w] * costs[f][w] for f in supply for w in demand]), "Total Cost"
+
+# Add supply constraints
+for f in supply:
+    prob += lpSum([vars[f][w] for w in demand]) == supply[f], f"Supply_{f}"
+
+# Add demand constraints
+for w in demand:
+    prob += lpSum([vars[f][w] for f in supply]) == demand[w], f"Demand_{w}"
+
+# Solve the problem
+prob.solve()
+
+# Print the results
+print("Status:", LpStatus[prob.status])
+print("\nOptimal Shipping Plan:")
+for v in prob.variables():
+    if v.varValue > 0:
+        print(f"{v.name.replace('_', ' to ')}: {v.varValue} units")
+print(f"\nTotal Shipping Cost: {value(prob.objective)} BDT")
+
+
+#A company has a team of four salesmen and there are four cities where the company 
+wants to start its business. After considering the capabilities of salesmen and the nature 
+of the cities, the company estimates that the profit per day in BDT. for each salesman 
+in each city is as below. 
+ 
+
+   city      1  2  3  4 
+
+         A 16 10 14 11 
+  sm     B 14 11 15 15 
+         C 15 15 13 12 
+         D 13 12 14 15 
+ 
+Find the assignment of salesmen to various cities which will yield maximum profit. 
+
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+#Profit matrix
+profit=np.array([
+    [16,10,14,11],
+    [14,11,15,15],
+    [15,15,13,12],
+    [13,12,14,15]
+])
+#For maximization
+cost=profit.max()-profit
+#Solve using Hungarian algorithm
+row_ind,col_ind=linear_sum_assignment(cost)
+#Output result
+total_profit=profit[row_ind,col_ind].sum()
+print('Optimal Assignment:')
+for i in range(len(row_ind)):
+    print(f'Salesman {chr(65+row_ind[i])} \u2192 City {col_ind[i]+1} (profit:{profit[row_ind[i]][col_ind[i]]})')
+
+print('Total maximum profit',total_profit)
+
+
+#Find the best strategy and the value of the following 3 3  game: 
+ 
+ Player A 
+        I II III 
+Player B 
+        I   -1 -2 8 
+        II   7 5 -1 
+        III   6 0 12
+
+
